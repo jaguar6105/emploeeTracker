@@ -29,6 +29,7 @@ async function mainMenu() {
     }
 }
 
+//query to view employees sorted by department
 async function viewEmployeeByDep() {
     connection.query("SELECT employee.id, employee.first_name, employee.last_name, roles.title, roles.salary FROM employee inner join roles ON employee.role_id = roles.id ORDER BY role_id;", function (err, res) {
         if (err) throw err;
@@ -36,6 +37,8 @@ async function viewEmployeeByDep() {
     });
 }
 
+//query to view employees sorted by manager 
+//note: manager not added
 async function viewEmployeeByMan() {
     connection.query("SELECT employee.id, employee.first_name, employee.last_name, roles.title, roles.salary FROM employee inner join roles ON employee.role_id = roles.id ORDER BY manager_id", function (err, res) {
         if (err) throw err;
@@ -43,7 +46,7 @@ async function viewEmployeeByMan() {
 
     });
 }
-
+//query to view employees not sorted
 async function viewEmployee() {
     connection.query("SELECT employee.id, employee.first_name, employee.last_name, roles.title, roles.salary FROM employee inner join roles ON employee.role_id = roles.id;", function (err, res) {
         if (err) throw err;
@@ -52,6 +55,7 @@ async function viewEmployee() {
     });
 }
 
+//function for just employee output
 function employeeOutput(list) {
     let output =
         `id  first name  last name  title  salary  manager id
@@ -63,6 +67,7 @@ function employeeOutput(list) {
     init();
 }
 
+//query to view roles
 async function viewRoles() {
     connection.query("SELECT roles.id, roles.title, roles.salary, department.department FROM roles inner join department", function (err, res) {
         if (err) throw err;
@@ -79,6 +84,7 @@ async function viewRoles() {
     });
 }
 
+//query to view departments
 async function viewDepartments() {
     connection.query("SELECT * FROM department", function (err, res) {
         if (err) throw err;
@@ -94,6 +100,7 @@ async function viewDepartments() {
     });
 }
 
+//function to add roles to database
 async function addRole() {
     try {
         connection.query("SELECT * FROM department", async function (err, res) {
@@ -134,6 +141,7 @@ async function addRole() {
 
 }
 
+//function to add departments to database
 async function addDepartments() {
 
     try {
@@ -157,6 +165,7 @@ async function addDepartments() {
 
 }
 
+//function to add employees to database
 async function addEmployee() {
     try {
         connection.query("SELECT * FROM roles", async function (err, res) {
@@ -197,7 +206,7 @@ async function addEmployee() {
 
 }
 
-
+//function to update an employees role
 async function updateEmployeeRole() {
     let name;
     let role
@@ -239,7 +248,7 @@ async function updateEmployeeRole() {
 }
 
 
-
+//initialization function
 async function init() {
     let response = "";
     response = await mainMenu();
