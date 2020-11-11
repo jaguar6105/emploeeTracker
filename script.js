@@ -75,26 +75,36 @@ async function viewDepartments() {
 
 async function addRole() {
     try {
-        const { title } = await inquirer.prompt({
-            name: "title",
-            message: "Enter a title:"
-        });
-        const { salary } = await inquirer.prompt({
-            name: "salary",
-            message: "Enter a salary:"
-        });
-        const { department } = await inquirer.prompt({
-            name: "department",
-            message: "Enter department id:"
-        });
+        connection.query("SELECT * FROM department", async function (err, res) {
+            if (err) { throw err; }
+            let departList = [];
+            for (let i = 0; i < res.length; i++) {
+                departList.push(` ${res[i].id} ${res[i].department}`);
+            }
 
-        connection.query(`INSERT INTO roles (title, salary, department_id) VALUE ('${title}',${salary},${department});`,
-            function (err, res) {
-                if (err) throw err;
-                console.log(`Row added`);
-                init();
-
+            const { title } = await inquirer.prompt({
+                name: "title",
+                message: "Enter a title:"
             });
+            const { salary } = await inquirer.prompt({
+                name: "salary",
+                message: "Enter a salary:"
+            });
+            const { department } = await inquirer.prompt({
+                name: "department",
+                type: "list",
+                choices: departList,
+                message: "Enter department id:"
+            });
+            let departId = JSON.stringify(department).split(" ");
+            connection.query(`INSERT INTO roles (title, salary, department_id) VALUE ('${title}',${salary},${departId[1]});`,
+                function (err, res) {
+                    if (err) throw err;
+                    console.log(`Row added`);
+                    init();
+
+                });
+        });
 
     }
     catch (err) {
@@ -128,25 +138,34 @@ async function addDepartments() {
 
 async function addEmployee() {
     try {
-        await inquirer.prompt([{
-            name: "firstName",
-            message: "Enter first name:"
-        },
-        {
-            name: "lastName",
-            message: "Enter last name:"
-        },
-        {
-            name: "role",
-            message: "Enter role id:"
-        }]).then(function (answer){
+        connection.query("SELECT * FROM roles", async function (err, res) {
+            if (err) { throw err; }
+            let roleList = [];
+            for (let i = 0; i < res.length; i++) {
+                roleList.push(` ${res[i].id} ${res[i].title}`);
+            }
+            await inquirer.prompt([{
+                name: "firstName",
+                message: "Enter first name:"
+            },
+            {
+                name: "lastName",
+                message: "Enter last name:"
+            },
+            {
+                type: "list",
+                choices: roleList,
+                name: "role",
+                message: "Choose a role:"
+            }]).then(function (answer) {
+                let roleId = JSON.stringify(answer.role).split(" ");
+                connection.query(`INSERT INTO employee (first_name, last_name, role_id) VALUE ('${answer.firstName}', '${answer.lastName}', ${roleId[1]});`,
+                    function (err, res) {
+                        if (err) throw err;
+                        console.log(`Row added`);
+                        init();
 
-        connection.query(`INSERT INTO employee (first_name, last_name, role_id) VALUE ('${answer.firstName}', '${answer.lastName}', ${answer.role});`,
-            function (err, res) {
-                if (err) throw err;
-                console.log(`Row added`);
-                init();
-
+                    });
             });
         });
 
@@ -192,7 +211,7 @@ async function updateEmployeeRole() {
                 if (err) { throw err; }
 
                 console.log("Update");
-            init();
+                init();
             });
         });
     });
@@ -202,40 +221,40 @@ async function updateEmployeeRole() {
 
 async function init() {
     let response = "";
-        response = await mainMenu();
-        switch (response) {
-            case "View All Employees":
-                viewEmployee();
-                break;
-            case "View All Employees By Department":
-                viewEmployeeByDep();
-                break;
-            case "View All Employees By Manager":
-                viewEmployeeByMan();
-                break;
-            case "Add an Employee":
-                await addEmployee();
-                break;
-            case "Update Employee Role":
-                updateEmployeeRole()
-                break;
-            case "View All Roles":
-                viewRoles();
-                break;
-            case "View All Departments":
-                await viewDepartments();
-                break;
-            case "Add a Role":
-                await addRole();
-                break;
-            case "Add a Department":
-                await addDepartments();
-                break;
-            case "Exit":
+    response = await mainMenu();
+    switch (response) {
+        case "View All Employees":
+            viewEmployee();
+            break;
+        case "View All Employees By Department":
+            viewEmployeeByDep();
+            break;
+        case "View All Employees By Manager":
+            viewEmployeeByMan();
+            break;
+        case "Add an Employee":
+            await addEmployee();
+            break;
+        case "Update Employee Role":
+            updateEmployeeRole()
+            break;
+        case "View All Roles":
+            viewRoles();
+            break;
+        case "View All Departments":
+            await viewDepartments();
+            break;
+        case "Add a Role":
+            await addRole();
+            break;
+        case "Add a Department":
+            await addDepartments();
+            break;
+        case "Exit":
             connection.end();
             break;
 
-        
+
     }
 }
 
