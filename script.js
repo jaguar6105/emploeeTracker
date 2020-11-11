@@ -18,7 +18,7 @@ async function mainMenu() {
     try {
         const { answer } = await inquirer.prompt({
             type: "list",
-            choices: ["View All Employees", "View All Employees By Department", "View All Employees By Manager", "Add an Employee", "Add a Department", "Add a Role", "Remove an Employee", "Update Employee Role", "Update Employee Manager", "View All Roles", "View All Departments", "Exit"],
+            choices: ["View All Employees", "View All Employees By Department", "View All Employees By Manager", "Add an Employee", "Add a Department", "Add a Role", "Update Employee Role", "View All Roles", "View All Departments", "Exit"],
             name: "answer",
             message: "What do would you like to do:"
         });
@@ -33,6 +33,7 @@ async function viewEmployeeByDep() {
     connection.query("SELECT * FROM employee ORDER BY role_id", function (err, res) {
         if (err) throw err;
         console.log(res);
+        init();
     });
 }
 
@@ -40,6 +41,8 @@ async function viewEmployeeByMan() {
     connection.query("SELECT * FROM employee ORDER BY manager_id", function (err, res) {
         if (err) throw err;
         console.log(res);
+        init();
+
     });
 }
 
@@ -47,6 +50,8 @@ async function viewEmployee() {
     connection.query("SELECT * FROM employee", function (err, res) {
         if (err) throw err;
         console.log(res);
+        init();
+
     });
 }
 
@@ -54,6 +59,8 @@ async function viewRoles() {
     connection.query("SELECT * FROM roles", function (err, res) {
         if (err) throw err;
         console.log(res);
+        init();
+
     });
 }
 
@@ -61,6 +68,8 @@ async function viewDepartments() {
     connection.query("SELECT * FROM department", function (err, res) {
         if (err) throw err;
         console.log(res);
+        init();
+
     });
 }
 
@@ -80,10 +89,12 @@ async function addRole() {
         });
 
         connection.query(`INSERT INTO roles (title, salary, department_id) VALUE ('${title}',${salary},${department});`,
-        function (err, res) {
-            if(err) throw err;
-            console.log(`Row added`);
-        });
+            function (err, res) {
+                if (err) throw err;
+                console.log(`Row added`);
+                init();
+
+            });
 
     }
     catch (err) {
@@ -100,11 +111,13 @@ async function addDepartments() {
             message: "Enter Department Name:"
         });
 
-        connection.query(`INSERT INTO department (department) VALUES ('${answer}');`, 
-        function (err, res) {
-            if(err) throw err;
-            console.log(`${answer} added`);
-        });
+        connection.query(`INSERT INTO department (department) VALUES ('${answer}');`,
+            function (err, res) {
+                if (err) throw err;
+                console.log(`${answer} added`);
+                init();
+
+            });
 
     }
     catch (err) {
@@ -115,23 +128,26 @@ async function addDepartments() {
 
 async function addEmployee() {
     try {
-        const { firstName } = await inquirer.prompt({
+        await inquirer.prompt([{
             name: "firstName",
             message: "Enter first name:"
-        });
-        const { lastName } = await inquirer.prompt({
+        },
+        {
             name: "lastName",
             message: "Enter last name:"
-        });
-        const { role } = await inquirer.prompt({
+        },
+        {
             name: "role",
             message: "Enter role id:"
-        });
+        }]).then(function (answer){
 
-        connection.query(`INSERT INTO employee (first_name, last_name, role_id) VALUE ('${firstName}', '${lastName}', ${role});`,
-        function (err, res) {
-            if(err) throw err;
-            console.log(`Row added`);
+        connection.query(`INSERT INTO employee (first_name, last_name, role_id) VALUE ('${answer.firstName}', '${answer.lastName}', ${answer.role});`,
+            function (err, res) {
+                if (err) throw err;
+                console.log(`Row added`);
+                init();
+
+            });
         });
 
     }
@@ -142,9 +158,50 @@ async function addEmployee() {
 }
 
 
+async function updateEmployeeRole() {
+    let name;
+    let role
+
+    connection.query("SELECT * FROM employee", async function (err, res) {
+        if (err) { throw err; }
+        let list = [];
+        for (let i = 0; i < res.length; i++) {
+            list.push(` ${res[i].id} ${res[i].first_name} ${res[i].last_name}`);
+        }
+        name = await inquirer.prompt({
+            type: "list",
+            choices: list,
+            name: "name",
+            message: "Choose a Employee:"
+        });
+        let id = JSON.stringify(name.name).split(" ");
+        connection.query("SELECT * FROM roles", async function (err, res) {
+            if (err) { throw err; }
+            let roleList = [];
+            for (let i = 0; i < res.length; i++) {
+                roleList.push(` ${res[i].id} ${res[i].title}`);
+            }
+            role = await inquirer.prompt({
+                type: "list",
+                choices: roleList,
+                name: "name",
+                message: "Choose a New Role:"
+            });
+            let roleId = JSON.stringify(role.name).split(" ");
+            connection.query(`UPDATE employee SET role_id = ${roleId[1]} WHERE id = ${id[1]};`, async function (err, res) {
+                if (err) { throw err; }
+
+                console.log("Update");
+            init();
+            });
+        });
+    });
+}
+
+
+
 async function init() {
-    var response = "";
-    while (response != "Exit") {
+    let response = "";
         response = await mainMenu();
         switch (response) {
             case "View All Employees":
@@ -159,14 +216,8 @@ async function init() {
             case "Add an Employee":
                 await addEmployee();
                 break;
-            case "Remove an Employee":
-                //viewEmployeeByDep();
-                break;
             case "Update Employee Role":
-                //viewEmployeeByMan();
-                break;
-            case "Update Employee Manager":
-                //viewEmployee();
+                updateEmployeeRole()
                 break;
             case "View All Roles":
                 viewRoles();
@@ -180,9 +231,12 @@ async function init() {
             case "Add a Department":
                 await addDepartments();
                 break;
-        }
+            case "Exit":
+            connection.end();
+            break;
+
+        
     }
-    connection.end();
 }
 
 init();
