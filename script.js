@@ -30,35 +30,50 @@ async function mainMenu() {
 }
 
 async function viewEmployeeByDep() {
-    connection.query("SELECT * FROM employee ORDER BY role_id", function (err, res) {
+    connection.query("SELECT employee.id, employee.first_name, employee.last_name, roles.title, roles.salary FROM employee inner join roles ON employee.role_id = roles.id ORDER BY role_id;", function (err, res) {
         if (err) throw err;
-        console.log(res);
-        init();
+        employeeOutput(res);
     });
 }
 
 async function viewEmployeeByMan() {
-    connection.query("SELECT * FROM employee ORDER BY manager_id", function (err, res) {
+    connection.query("SELECT employee.id, employee.first_name, employee.last_name, roles.title, roles.salary FROM employee inner join roles ON employee.role_id = roles.id ORDER BY manager_id", function (err, res) {
         if (err) throw err;
-        console.log(res);
-        init();
+        employeeOutput(res);
 
     });
 }
 
 async function viewEmployee() {
-    connection.query("SELECT * FROM employee", function (err, res) {
+    connection.query("SELECT employee.id, employee.first_name, employee.last_name, roles.title, roles.salary FROM employee inner join roles ON employee.role_id = roles.id;", function (err, res) {
         if (err) throw err;
-        console.log(res);
-        init();
+        employeeOutput(res);
 
     });
 }
 
+function employeeOutput(list) {
+    let output =
+        `id  first name  last name  title  salary  manager id
+--- ----------  ---------  -----  ------  ----------\n`;
+    for (let i = 0; i < list.length; i++) {
+        output += ` ${list[i].id} | ${list[i].first_name} | ${list[i].last_name} | ${list[i].title} | ${list[i].salary} | ${list[i].manager_id} \n`
+    }
+    console.log(output);
+    init();
+}
+
 async function viewRoles() {
-    connection.query("SELECT * FROM roles", function (err, res) {
+    connection.query("SELECT roles.id, roles.title, roles.salary, department.department FROM roles inner join department", function (err, res) {
         if (err) throw err;
-        console.log(res);
+        let output =
+            `id  title  salary  department
+---  -----  -------  ----------\n`;
+        for (let i = 0; i < res.length; i++) {
+            output += ` ${res[i].id} | ${res[i].title} | ${res[i].salary} | ${res[i].department}\n`
+        }
+        console.log(output);
+
         init();
 
     });
@@ -67,7 +82,13 @@ async function viewRoles() {
 async function viewDepartments() {
     connection.query("SELECT * FROM department", function (err, res) {
         if (err) throw err;
-        console.log(res);
+        let output =
+            `id  department
+--- ----------\n`;
+        for (let i = 0; i < res.length; i++) {
+            output += ` ${res[i].id} | ${res[i].department}\n`
+        }
+        console.log(output);
         init();
 
     });
@@ -224,13 +245,13 @@ async function init() {
     response = await mainMenu();
     switch (response) {
         case "View All Employees":
-            viewEmployee();
+            await viewEmployee();
             break;
         case "View All Employees By Department":
-            viewEmployeeByDep();
+            await viewEmployeeByDep();
             break;
         case "View All Employees By Manager":
-            viewEmployeeByMan();
+            await viewEmployeeByMan();
             break;
         case "Add an Employee":
             await addEmployee();
@@ -239,7 +260,7 @@ async function init() {
             updateEmployeeRole()
             break;
         case "View All Roles":
-            viewRoles();
+            await viewRoles();
             break;
         case "View All Departments":
             await viewDepartments();
